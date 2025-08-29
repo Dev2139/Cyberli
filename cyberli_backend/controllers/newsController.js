@@ -30,11 +30,22 @@ const analyzeNews = async (req, res) => {
       }
     }
 
-  
+    let truthScore = 0;
+    try {
+      const hfResponse = await axios.post(
+        HF_API_URL,
+        { inputs: inputText },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.HF_API_KEY}`,
+          },
+        }
+      );
+      truthScore = hfResponse?.data?.[0]?.[0]?.score || 0; // Adjust based on response
+    } catch (hfError) {
+      console.error('Hugging Face error:', hfError.response?.data || hfError.message);
+    }
 
-   
-
-    // 3️⃣ Google Fact Check
     let factCheckResult = 'Not Found';
     try {
       const googleResponse = await axios.get(GOOGLE_API_URL, {
@@ -57,6 +68,7 @@ const analyzeNews = async (req, res) => {
     res.json({
       input: inputText,
       result: {
+        truthScore,
         factCheckResult,
       },
 
